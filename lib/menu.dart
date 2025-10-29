@@ -140,9 +140,23 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color backgroundColor;
+    switch (item.name) {
+      case "See All Products":
+        backgroundColor = Colors.blue;   // biru
+        break;
+      case "My Products":
+        backgroundColor = Colors.green;  // hijau
+        break;
+      case "Create Product":
+        backgroundColor = Colors.red;    // merah
+        break;
+      default:
+        backgroundColor = Theme.of(context).colorScheme.secondary;
+    }
     return Material(
       // Menentukan warna latar belakang dari tema aplikasi.
-      color: Theme.of(context).colorScheme.secondary,
+      color: backgroundColor,
       // Membuat sudut kartu melengkung.
       borderRadius: BorderRadius.circular(12),
 
