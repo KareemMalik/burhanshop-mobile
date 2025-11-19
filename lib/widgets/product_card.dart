@@ -1,5 +1,10 @@
+import 'package:burhanshop/screens/login.dart';
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 import '../screens/productlist_form.dart';
+import '../screens/product_entry_list.dart';
+import 'package:burhanshop/theme/app_colors.dart';
 
 class ItemHomepage {
   final String name;
@@ -9,66 +14,109 @@ class ItemHomepage {
 }
 
 class ItemCard extends StatelessWidget {
-  // Menampilkan kartu dengan ikon dan nama.
-
   final ItemHomepage item;
 
   const ItemCard(this.item, {super.key});
 
+  List<Color> _backgroundGradient() {
+    switch (item.name) {
+      case "Add Product":
+        return [AppColors.accent, const Color(0xFF0F8F4A)];
+      case "Logout":
+        return [const Color(0xFF5B5D8B), const Color(0xFF474775)];
+      default:
+        return [AppColors.surfaceHighlight, AppColors.surface];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor;
-    switch (item.name) {
-      case "See All Products":
-        backgroundColor = Colors.blue;   // biru
-        break;
-      case "My Products":
-        backgroundColor = Colors.green;  // hijau
-        break;
-      case "Add Product":
-        backgroundColor = Colors.red;    // merah
-        break;
-      default:
-        backgroundColor = Theme.of(context).colorScheme.secondary;
-    }
-    return Material(
-      // Menentukan warna latar belakang dari tema aplikasi.
-      color: backgroundColor,
-      // Membuat sudut kartu melengkung.
-      borderRadius: BorderRadius.circular(12),
+    final request = context.watch<CookieRequest>();
 
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        // Aksi ketika kartu ditekan.
-        onTap: () {
-          // Menampilkan pesan SnackBar saat kartu ditekan.
+        borderRadius: BorderRadius.circular(22),
+        onTap: () async {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
-                SnackBar(content: Text("Kamu telah menekan tombol ${item.name}!"))
+              SnackBar(content: Text("Kamu telah menekan tombol ${item.name}!")),
             );
           if (item.name == "Add Product") {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const ProductFormPage()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProductFormPage()),
+            );
+          } else if (item.name == "See All Products") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProductEntryListPage(),
+              ),
+            );
+          } else if (item.name == "Logout") {
+            final response = await request.logout(
+                "https://malik-alifan-burhanshop.pbp.cs.ui.ac.id/auth/logout/");
+            String message = response["message"];
+            if (context.mounted) {
+              if (response['status']) {
+                String uname = response["username"];
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("$message See you again, $uname."),
+                  ),
+                );
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(message),
+                  ),
+                );
+              }
+            }
           }
         },
-        // Container untuk menyimpan Icon dan Text
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: _backgroundGradient(),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             child: Column(
-              // Menyusun ikon dan teks di tengah kartu.
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   item.icon,
                   color: Colors.white,
-                  size: 30.0,
+                  size: 28,
                 ),
-                const Padding(padding: EdgeInsets.all(3)),
+                const SizedBox(height: 12),
                 Text(
                   item.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -76,4 +124,5 @@ class ItemCard extends StatelessWidget {
         ),
       ),
     );
-  }}
+  }
+}
